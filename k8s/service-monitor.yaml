@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sentiment-monitor
+  labels:
+    release: prometheus 
+  selector:
+    matchLabels:
+      app: sentiment
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 10s

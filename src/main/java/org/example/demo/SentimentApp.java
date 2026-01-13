@@ -19,14 +19,9 @@ public class SentimentApp {
     private final Counter negativeRequests;
 
     public SentimentApp(MeterRegistry meterRegistry) {
-        this.positiveRequests = meterRegistry.counter(
-                "sentiment_api_requests_total",
-                "type", "positive"
-        );
-        this.negativeRequests = meterRegistry.counter(
-                "sentiment_api_requests_total",
-                "type", "negative"
-        );
+        // Эти метрики появятся в Prometheus
+        this.positiveRequests = meterRegistry.counter("sentiment_api_requests_total", "type", "positive");
+        this.negativeRequests = meterRegistry.counter("sentiment_api_requests_total", "type", "negative");
     }
 
     public static void main(String[] args) {
@@ -34,9 +29,7 @@ public class SentimentApp {
     }
 
     @GetMapping("/api/sentiment")
-    public Map<String, Object> analyzeText(
-            @RequestParam(name = "text", defaultValue = "") String text
-    ) {
+    public Map<String, Object> analyzeText(@RequestParam(name = "text", defaultValue = "") String text) {
         String result = detectSentiment(text);
 
         if ("negative".equals(result)) {
@@ -49,7 +42,6 @@ public class SentimentApp {
         response.put("sentiment", result);
         response.put("length", text.length());
         response.put("originalText", text);
-
         return response;
     }
 
