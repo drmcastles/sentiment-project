@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentiment-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sentiment
+  template:
+    metadata:
+      labels:
+        app: sentiment
+    spec:
+      containers:
+        - name: java-app
+          image: sentiment-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"    # Обязательно для HPA
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment-service
+  labels:
+    app: sentiment
+spec:
+  type: LoadBalancer # В Minikube требуется 'minikube tunnel' для внешнего IP
+  selector:
+    app: sentiment
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sentiment-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sentiment-service
+                port:
+                  number: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sentiment-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sentiment-app
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
